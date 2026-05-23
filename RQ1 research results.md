@@ -8,11 +8,15 @@ RQ1: What minimal set of cloud infrastructure concepts can express common portab
 
 The minimal portable concept set should not begin with provider resource names such as `aws_instance`, `AWS::RDS::DBInstance`, `azurerm_linux_virtual_machine`, or Kubernetes `Deployment`. It should begin with provider-independent infrastructure intent.
 
-After an independent literature reassessment, the RQ1 answer is refined as follows:
+After a peer-reviewed literature review focused only on RQ1, the answer is refined as follows:
 
-> A vendor-neutral cloud architecture definition language requires a small semantic core consisting of deployment unit and interface, workload, runtime and artifact model, capacity profile, network boundary, endpoint, storage, data service, identity principal, access policy, configuration/secrets, scaling policy, placement/availability, and relationship/lifecycle semantics. These concepts are sufficient to describe common portable architectures while keeping provider-specific details outside the language core.
+> A vendor-neutral cloud architecture definition language requires a semantic portability kernel consisting of deployment unit, deployment interface, workload/component, runtime and artifact model, capacity profile, network boundary, endpoint, storage, data service, identity principal, access policy, configuration/secrets, scaling/adaptation policy, placement/availability, requirements/SLO constraints, and relationship/lifecycle semantics. These concepts are sufficient to describe the selected common portable architectures while keeping provider-specific resource details outside the core language.
 
-The revised set is slightly broader than the first RQ1 draft. The earlier draft correctly identified compute, network, storage, database, security, scaling, placement, and dependency concepts. However, independent literature shows that a reusable cloud definition also needs: deployment inputs/outputs, an artifact/package reference for runnable workloads, and a provider-neutral way to express capacity without directly naming provider instance types or SKUs.
+This is a refinement of the earlier RQ1 result. The earlier answer correctly identified compute, network, storage, database, security, scaling, placement, and dependency concepts. The peer-reviewed literature shows that three concepts must be made more explicit:
+
+- deployment interface: inputs, outputs, and externally supplied values
+- runtime/artifact/capacity: what runs, how it runs, and with what resource profile
+- requirements/SLO constraints: performance, cost, security, placement, scalability, and availability requirements that guide provider-independent modelling and backend selection
 
 ## Method Used to Answer RQ1
 
@@ -25,109 +29,102 @@ First, local thesis sources were analyzed:
 - `Existing literature.md`: compares provider-native IaC, multi-provider IaC, TOSCA, CAMEL, DOML, Crossplane, OAM, and Infrastructure-from-Code approaches.
 - `work plan and methodology.md`: defines domain analysis as the method for answering RQ1 and benchmark architectures as the evidence base.
 
-Second, an independent literature search was performed across standards, official documentation, and related research:
-
-- NIST cloud definition and cloud reference architecture [1], [2].
-- TOSCA v2.0 service topology model [3].
-- OCCI/TOSCA model-based cloud resource management research [4].
-- Terraform, CloudFormation, Azure ARM/Bicep, OpenStack Heat, and Kubernetes documentation [5], [6], [7], [8], [9], [10].
-- SPIFFE workload identity documentation [11].
+Second, a focused literature review was conducted using peer-reviewed publications only. Non-peer-reviewed standards pages and vendor documentation were not used as evidence for this revision. The reviewed literature includes peer-reviewed journal papers, conference papers, and scholarly book chapters on cloud modelling languages, model-driven multi-cloud deployment, TOSCA-based orchestration, SLO modelling, secure multi-cloud deployment, and multi-cloud native architecture.
 
 The concept set was selected using five criteria:
 
-1. Cross-provider recurrence: the concept appears across multiple clouds, IaC systems, or standards.
+1. Cross-provider recurrence: the concept appears across multiple clouds, IaC systems, or cloud modelling approaches.
 2. Architectural necessity: the concept is required to describe common infrastructure patterns.
 3. Semantic usefulness: the concept carries behavior that must be preserved or diagnosed during translation.
 4. Provider neutrality: the concept can be described without naming a provider-specific service.
 5. Lowering feasibility: the concept can be mapped into at least two realistic backend families, even if the mapping is partial.
 
-## Independent Literature-Based Reassessment
+## Peer-Reviewed Literature Review for RQ1
 
-The original RQ1 result was largely valid, but the independent literature study suggests four refinements.
+### TOSCA and topology-oriented cloud modelling
 
-### 1. Deployment interface should be explicit
+Binz et al. present TOSCA as a way to support portable automated deployment and management of cloud applications. The important learning for RQ1 is that a portable cloud language must represent application components, their relationships, deployment artifacts, and lifecycle management, not just individual infrastructure resources [1].
 
-CloudFormation, Azure ARM templates, OpenStack Heat, and TOSCA all distinguish the deployable unit from its inputs and outputs. CloudFormation has Resources, Parameters, and Outputs [6]. ARM templates have parameters, variables, resources, and outputs [7]. Heat templates describe resources, parameters, inputs, constraints, and dependencies [8]. TOSCA service templates also include inputs, outputs, node templates, relationship templates, policies, workflows, and substitution mappings [3].
+Brogi et al. further show that TOSCA application descriptions can be matched by considering behaviour, exact compatibility, and relaxed/plug-in compatibility [2]. This is important for RQ1 because the DSL should preserve enough semantic detail to later support RQ2 and RQ3: exact matches, partial matches, and degraded alternatives.
 
-Therefore, the DSL should not only have a `deploy` block. It should also model a deployment interface:
+TORCH, a TOSCA-based orchestrator for multi-cloud containerized applications, reinforces the need to separate provider-neutral application requirements from proprietary cloud API invocation [3]. This supports keeping provider-specific resources outside the DSL core.
 
-- input parameters
-- output values
-- environment-specific values
-- externally supplied resources
-- exported connection details
+TOSCAdata extends TOSCA for data-pipeline applications and highlights that generic application topology is not enough for data-intensive systems; data movement, processing, scheduling, reuse, and multi-cloud data flow may need explicit modelling [4]. This supports generalizing `database` into `data service`, with future extension toward data flow and data lifecycle.
 
-This matters because portability is not only about resource translation. It is also about reusing the same architecture across environments without rewriting the program.
+### CloudML, CloudMF, and model-driven multi-cloud management
 
-### 2. Workload artifact/package should be part of the workload model
+Ferry et al. argue that multi-cloud systems need model-driven techniques for specifying provisioning, deployment, monitoring, and adaptation concerns at design time and enacting them at runtime [5]. This supports three RQ1 concepts: deployment unit, lifecycle semantics, and scaling/adaptation policy.
 
-The first draft included workload and runtime model but treated runnable artifacts only as an example attribute. TOSCA explicitly models artifacts, and Kubernetes workload definitions normally identify runnable workload resources and containerized application execution [3], [9]. Serverless and VM-based deployments also require some executable package, image, script, or machine image.
+CloudMF provides a DSL for provisioning and deploying multi-cloud applications, together with a models@runtime environment for continuous provisioning, deployment, and adaptation [6]. The RQ1 implication is that a portable DSL should not be limited to a static resource list. It should include enough relationship, lifecycle, and adaptation semantics to support later runtime-aware analysis.
 
-Therefore, `artifact` should be represented as a first-class workload sub-concept. It does not need to be a top-level block in every DSL program, but the language must be able to represent what is being run.
+CAMEL is especially important because it integrates multiple domain-specific languages for multi-cloud application management. It covers provisioning, deployment, requirements, scalability, security, and runtime adaptation [7]. In CAMEL, users define provider-independent topology, application requirements such as SLOs and optimization goals, and scalability rules. This strongly supports adding `requirements/SLO constraints` as an explicit concept in the RQ1 result.
 
-Examples:
+DOML, the DevOps Modeling Language, provides a cloud modelling language that can be mapped into multiple IaC languages and separates application deployment/configuration from infrastructure provisioning [8]. This supports the separation between workload/component, runtime environment, abstract infrastructure, and concrete provider-specific lowering.
 
-- container image
-- VM image
-- function package
-- initialization script
-- deployment archive
+### Multi-cloud architecture and resource characterization
 
-### 3. Capacity profile should be separated from provider-specific size names
+Alonso et al.'s systematic literature review of multi-cloud native applications identifies open research needs around stateful/stateless component design, resource classification, non-functional requirements, network elements, security, cost, latency, performance, and cloud-agnostic design [9]. This is a strong peer-reviewed justification for including not only resources, but also placement, network, state, data service, security, and requirements/SLO constraints in the minimal concept set.
 
-The earlier draft included workload and scaling but did not explicitly represent capacity. In real IaC systems, users must specify instance size, SKU, CPU, memory, disk, storage capacity, resource limits, or database tier through resource arguments and properties [5], [6], [7], [9]. If the DSL omits capacity, backend generation becomes arbitrary. If it uses provider names such as `t3.micro` or `Standard_B2s`, the language collapses into provider-specific syntax.
+Quint and Kratzke propose a lightweight multi-cloud DSL for elastic and transferable cloud-native applications. Their work is useful because it deliberately reduces language scope and focuses on containerized deployments, services, ports, CPU/memory requests, scaling rules, scheduling constraints, and separation between elastic platform definition and application definition [10]. This supports the RQ1 decision to keep the core small but to include runtime/artifact, endpoint, capacity, scaling, and placement/constraint concepts.
 
-Therefore, the DSL needs a provider-neutral capacity profile.
+### Requirements, SLOs, and security constraints
 
-Examples:
+SLO-ML argues that many cloud modelling languages lack practical support for selecting services based on application service-level objectives, and proposes a generative language for capturing SLO requirements and producing deployment code [11]. This directly supports adding `requirements/SLO constraints` to the RQ1 concept set.
 
-```text
-capacity: small
-cpu: 2
-memory: 4Gi
-storage_size: 100Gi
-performance_class: general_purpose
-```
+The MUSA deployer work shows that secure multi-cloud deployment requires application security requirements and Security Service Level Agreements to be expressed and evaluated before automated deployment [12]. This supports access policy and security constraints as portable intent, even though the backend implementations will differ.
 
-Provider lowerers can then map these to instance types, SKUs, Kubernetes resource requests, or database tiers.
+### Cloud-agnostic adaptation and portability
 
-### 4. Database should be generalized as a data service
+Miranda et al. propose a model-driven approach to adaptive multi-cloud applications and emphasize that vendor-specific technologies and services cause migration and portability problems during the design stage [13]. Their work supports the RQ1 rule that provider-specific features should not enter the portable core; instead, the DSL should express semantic intent and expose non-portable decisions explicitly.
 
-The earlier draft treated database as a core concept. That is justified for the selected benchmark cases, especially managed PostgreSQL. However, cloud definitions and model-based cloud research describe broader pools of configurable resources and heterogeneous services, including compute, storage, networks, applications, and services [1], [4]. In practice, providers expose many managed data services: databases, caches, queues, streams, object stores, and analytics services.
+## Critical Learnings from Peer-Reviewed Literature
 
-To avoid creating a new top-level DSL construct for every provider service, the refined concept is `data service`, with `database` as a required first subtype for the prototype.
+The peer-reviewed literature leads to six changes or confirmations.
 
-Example:
+### 1. RQ1 is not only a resource taxonomy problem
 
-```text
-data_service app_db {
-  kind: relational_database
-  engine: postgres
-  mode: managed
-}
-```
+The concept set should not be a list of cloud resources. TOSCA, CloudMF, CAMEL, DOML, and SLO-ML all show that portable cloud modelling requires components, relationships, requirements, lifecycle, constraints, and deployment concerns. Therefore, the DSL core must represent both resources and semantic relations.
 
-This preserves the thesis focus while leaving space for future extensions such as queue, cache, or stream.
+### 2. Requirements and SLOs must be explicit
+
+The strongest correction to the earlier result is the addition of `requirements/SLO constraints`. CAMEL, SLO-ML, MUSA, and the multi-cloud SLR all show that cost, performance, latency, security, availability, location, and scalability requirements are essential to cloud portability. These constraints guide provider selection and later capability mapping.
+
+### 3. Application components and infrastructure must be separated
+
+DOML, CloudMF, and the lightweight multi-cloud DSL all support separating application-level components from infrastructure or platform-level implementation. This reinforces the thesis direction: DSL source should express workload intent, while IR and backend lowering handle provider-specific resources.
+
+### 4. Runtime, artifacts, and capacity cannot be hidden
+
+The lightweight DSL and TOSCA-related work show that a deployable cloud application needs executable artifacts, runtime assumptions, resource requests, ports/endpoints, scaling rules, and scheduling/placement constraints. These should be first-class semantic attributes even if they are nested under workload.
+
+### 5. Data must be treated beyond a simple database label
+
+TOSCAdata shows that data-intensive cloud applications require modelling data flow, data migration, processing, scheduling, and storage. For this thesis prototype, `data service` can begin with relational database semantics, but the core should be extensible toward data flow and data lifecycle.
+
+### 6. Security is a portable intent but not a portable implementation
+
+MUSA and CAMEL show that security requirements are central in multi-cloud modelling. However, IAM, RBAC, managed identity, service accounts, and policy systems differ significantly. Therefore, RQ1 should include identity and access policy as intent-level concepts, while RQ3 must classify their backend mappings as exact, partial, degraded, or unsupported.
 
 ## Revised Minimal Concept Set
 
-| No. | Core concept | Purpose in the DSL | Why it is needed | Example provider lowering |
+| No. | Core concept | Purpose in the DSL | Peer-reviewed support | Example provider lowering |
 | --- | --- | --- | --- | --- |
-| 1 | Deployment unit | Groups related infrastructure into one compilation and deployment boundary | Every architecture needs a scope for resources, dependencies, validation, and backend output | Terraform module, CloudFormation stack, ARM/Bicep deployment, Heat stack, Kubernetes namespace/manifests |
-| 2 | Deployment interface | Represents inputs, outputs, externally supplied values, and exported connection details | Reusable infrastructure definitions need parameters and outputs across environments | Terraform variables/outputs, CloudFormation Parameters/Outputs, ARM parameters/outputs, TOSCA inputs/outputs |
-| 3 | Workload | Represents executable compute intent | Required for web apps, APIs, workers, jobs, and services | EC2/ECS/Lambda, Azure VM/Container Apps/Functions, Kubernetes Deployment/Job |
-| 4 | Runtime and artifact model | Describes how the workload runs and what artifact is executed | VM, container, function, and job deployments require different lowering rules and artifact handling | AMI/image, container image, function package, cloud-init/script |
-| 5 | Capacity profile | Represents CPU, memory, storage size, performance class, or abstract size | Capacity must be portable without provider-specific instance/SKU names | EC2 instance type, Azure VM size, Kubernetes requests/limits, database tier |
-| 6 | Network boundary | Represents isolation, private/public zones, and routing scope | Network semantics are central to security and portability | VPC/VNet, subnet, security group, Kubernetes NetworkPolicy |
-| 7 | Endpoint | Represents exposed access to a workload or service | Required for web apps, APIs, load balancers, and internal services | ALB/API Gateway, Azure Load Balancer/App Gateway, Kubernetes Service/Ingress |
-| 8 | Storage | Represents persistent data storage | Common architectures need object, block, or file storage | S3/EBS/EFS, Azure Blob/Disk/Files, PVC/MinIO |
-| 9 | Data service | Represents managed stateful services, with database as the first required subtype | Managed services differ across providers and need semantic mapping | RDS PostgreSQL, Azure PostgreSQL, Cloud SQL, database operator |
-| 10 | Identity principal | Represents who or what can act | IAM and RBAC are provider-specific, but identity intent can be modeled independently of provider accounts; SPIFFE is one example of platform-neutral workload identity [11] | IAM role, managed identity, service account, SPIFFE ID |
-| 11 | Access policy | Represents allowed actions over resources | Security intent must be preserved and diagnosed | IAM policy, Azure RBAC role assignment, Kubernetes RBAC |
-| 12 | Configuration and secrets | Represents runtime configuration and sensitive values | Real workloads need environment variables, credentials, tokens, and connection strings | Secrets Manager, Parameter Store, Key Vault, Kubernetes Secret/ConfigMap |
-| 13 | Scaling policy | Represents elasticity intent | Elasticity is a cloud-defining property and implemented differently across providers | Auto Scaling Group, VMSS autoscale, Kubernetes HPA |
-| 14 | Placement and availability | Represents region, zone, replication, and fault-domain requirements | Portability depends on location, redundancy, and availability behavior | AWS region/AZ, Azure region/zones, Kubernetes node/zone affinity |
-| 15 | Relationship and lifecycle semantics | Represents dependency, binding, ownership, requirement/capability, creation order, and deletion behavior | A compiler requires a semantic graph, not just a flat resource list | Terraform dependency graph, CloudFormation DependsOn, TOSCA relationships, Kubernetes owner/reference relations |
+| 1 | Deployment unit | Groups related infrastructure into one compilation and deployment boundary | TOSCA, CloudMF, DOML | Terraform module, CloudFormation stack, Bicep deployment, Kubernetes namespace/manifests |
+| 2 | Deployment interface | Represents inputs, outputs, external values, and exported connection details | TOSCA service templates, DOML | Terraform variables/outputs, CloudFormation Parameters/Outputs, Bicep parameters/outputs |
+| 3 | Workload/component | Represents executable application or service component intent | TOSCA, CloudMF, DOML, multi-cloud SLR | VM, container, function, job, service |
+| 4 | Runtime and artifact model | Describes how the workload runs and what artifact is executed | TOSCA artifacts, lightweight multi-cloud DSL | VM image, container image, function package, startup script |
+| 5 | Capacity profile | Represents CPU, memory, storage size, performance class, or abstract size | Lightweight multi-cloud DSL, SLO-ML, multi-cloud SLR | Instance type, VM size, Kubernetes requests/limits, database tier |
+| 6 | Network boundary | Represents isolation, private/public zones, routing scope, and network constraints | Multi-cloud SLR, TOSCA/TORCH | VPC/VNet, subnet, security group, NetworkPolicy |
+| 7 | Endpoint | Represents exposed access to a workload or service | Lightweight multi-cloud DSL, TOSCA, DOML | Load balancer, API gateway, Kubernetes Service/Ingress |
+| 8 | Storage | Represents persistent data storage | TOSCAdata, CloudMF, DOML | Object storage, block volume, file share, persistent volume |
+| 9 | Data service | Represents managed stateful services, with database as first subtype | TOSCAdata, multi-cloud SLR | Managed PostgreSQL, cache, queue, stream, data pipeline component |
+| 10 | Identity principal | Represents who or what can act | CAMEL security modelling, MUSA | IAM role, managed identity, service account |
+| 11 | Access policy | Represents allowed actions over resources | CAMEL, MUSA | IAM policy, Azure RBAC assignment, Kubernetes RBAC |
+| 12 | Configuration and secrets | Represents runtime configuration and sensitive values | DOML, TOSCA artifacts/properties, MUSA | Secret manager, parameter store, ConfigMap, Secret |
+| 13 | Scaling/adaptation policy | Represents elasticity and runtime adaptation intent | CAMEL scalability rules, CloudMF models@runtime, lightweight DSL | Autoscaling group, HPA, VMSS autoscale |
+| 14 | Placement and availability | Represents region, zone, replication, scheduling, and fault-domain requirements | CAMEL, SLO-ML, multi-cloud SLR | Region/AZ, node affinity, zone redundancy |
+| 15 | Requirements/SLO constraints | Represents cost, latency, performance, security, availability, location, and compliance constraints | CAMEL, SLO-ML, MUSA, multi-cloud SLR | Capability selection rules, policy checks, deployment diagnostics |
+| 16 | Relationship and lifecycle semantics | Represents dependency, binding, ownership, requirements/capabilities, creation order, and lifecycle operations | TOSCA, CloudMF, DOML | Dependency graph, DependsOn, owner refs, orchestration workflow |
 
 ## Concept Categories
 
@@ -141,16 +138,16 @@ These concepts define the boundary and reusable interface of the infrastructure:
 - deployment interface
 - relationship and lifecycle semantics
 
-This layer is strongly supported by TOSCA, CloudFormation, ARM templates, Terraform, and Heat, all of which distinguish the deployable definition from resources, parameters, outputs, and relationships.
+This layer is supported by TOSCA-style topology modelling and DOML's approach of mapping abstract deployment models into IaC backends.
 
 ### 2. Execution Layer
 
 These concepts define application execution:
 
-- workload
+- workload/component
 - runtime and artifact model
 - capacity profile
-- scaling policy
+- scaling/adaptation policy
 
 This layer captures the difference between "run this service" and provider-specific resources such as EC2, ECS, Lambda, Azure Functions, or Kubernetes Deployment.
 
@@ -161,16 +158,16 @@ These concepts define reachability and exposure:
 - network boundary
 - endpoint
 
-Many portability failures occur in networking because public/private access, ingress rules, subnet behavior, load balancer features, service discovery, and network policy differ substantially across platforms.
+The multi-cloud SLR identifies network elements and heterogeneous infrastructure characterization as open issues in multi-cloud design. Therefore, networking must be explicit in the portable core.
 
 ### 4. Data Layer
 
-These concepts define persistence and state:
+These concepts define persistence, state, and managed data capability:
 
 - storage
 - data service
 
-Storage and data services are separated because object storage, block storage, file storage, managed relational databases, queues, and caches have different durability, consistency, lifecycle, backup, and access semantics.
+Storage and data services are separated because object storage, block storage, file storage, managed relational databases, queues, caches, streams, and data pipelines have different durability, consistency, scheduling, lifecycle, and portability properties.
 
 ### 5. Security and Configuration Layer
 
@@ -180,35 +177,37 @@ These concepts define trust, access, and runtime parameters:
 - access policy
 - configuration and secrets
 
-This layer is necessary because vendor lock-in is not limited to compute and storage. Identity and permission models are among the least portable parts of cloud systems.
+Security should be modelled as portable intent, but its backend lowering must be treated carefully because cloud identity and policy systems differ significantly.
 
-### 6. Placement and Resilience Layer
+### 6. Requirements and Resilience Layer
 
-These concepts define where and how reliably infrastructure runs:
+These concepts define quality goals and constraints:
 
+- requirements/SLO constraints
 - placement and availability
-- scaling policy, where scaling affects resilience
-- capacity profile, where capacity affects deployability and performance
+- scaling/adaptation policy
+- capacity profile
 
-Placement and availability deserve explicit representation because region, zone, fault domain, redundancy, and managed-service availability guarantees cannot be assumed equivalent across providers.
+This layer is the most important addition from the peer-reviewed review. Requirements are not merely annotations; they drive resource selection, portability analysis, and diagnostic reporting.
 
 ## Why These Concepts Are Minimal
 
-The refined concept set is minimal in a research sense because removing any concept weakens either expressiveness, portability analysis, or backend lowering:
+The refined concept set is minimal in a research sense because removing any concept weakens expressiveness, portability analysis, or backend lowering:
 
 - Without deployment unit, the infrastructure has no unit of compilation, validation, or output.
 - Without deployment interface, the DSL cannot represent reusable inputs, outputs, and environment-specific values.
-- Without workload, the language cannot describe executable infrastructure.
-- Without runtime and artifact model, it cannot distinguish VM, container, function, job, image, and package semantics.
+- Without workload/component, the language cannot describe executable application structure.
+- Without runtime and artifact model, it cannot distinguish VM, container, function, job, image, package, and script semantics.
 - Without capacity profile, provider lowerers must guess instance size, resource limits, storage size, or service tier.
-- Without network boundary, it cannot describe private services, isolation, or routing constraints.
+- Without network boundary, it cannot describe private services, isolation, routing, or network constraints.
 - Without endpoint, it cannot describe externally reachable APIs, internal services, or load-balanced access.
 - Without storage, it cannot describe object assets, volumes, filesystems, or persistent data.
 - Without data service, it cannot model managed PostgreSQL and similar stateful services.
 - Without identity principal and access policy, it cannot represent security intent independently of IAM/RBAC implementations.
 - Without configuration and secrets, it cannot model real deployable workloads.
-- Without scaling policy, it cannot represent elasticity, which is one of the core properties of cloud computing.
-- Without placement and availability, it cannot reason about regions, zones, redundancy, or disaster tolerance.
+- Without scaling/adaptation policy, it cannot represent elasticity and runtime adaptation.
+- Without placement and availability, it cannot reason about regions, zones, redundancy, scheduling, or disaster tolerance.
+- Without requirements/SLO constraints, it cannot express why one provider mapping is acceptable while another is not.
 - Without relationship/lifecycle semantics, it cannot construct a semantic IR or compile reliably to IaC backends.
 
 The set is intentionally not a complete catalog of all cloud services. It is a portability kernel: the smallest practical set of concepts needed to express common architectures and feed the thesis IR, capability mapping, and compiler pipeline.
@@ -228,7 +227,7 @@ Some concepts should not be first-class portable core constructs because they ar
 | Kubernetes CRDs for specific operators | Runtime-specific abstraction | Extension or backend-specific target |
 | Proprietary AI/data services | Semantics differ strongly by provider | Extension with no assumed portability |
 | Detailed observability dashboards | Important operational feature, but not required for minimal provisioning semantics | Future extension |
-| Cost and billing controls | Important governance feature, but provider billing models differ substantially | Future extension or metadata/policy layer |
+| Cost and billing controls | Important governance feature, but provider billing models differ substantially | Model as high-level requirement, not provider-specific billing logic |
 
 This supports the thesis novelty from `Outcomes.md`: the project should not claim that every cloud feature is portable. It should identify non-portable features before deployment and explain their consequences.
 
@@ -240,6 +239,8 @@ The refined concept set can be expressed through the following initial DSL const
 deploy <name> {
   input <name> { ... }
   output <name> { ... }
+
+  requirement <name> { ... }
 
   workload <name> { ... }
   network <name> { ... }
@@ -265,6 +266,13 @@ deploy web_app {
   input environment {
     type: string
     default: "dev"
+  }
+
+  requirement production_slo {
+    availability: "99.9%"
+    max_latency_ms: 250
+    data_residency: "IN"
+    cost_class: balanced
   }
 
   placement default {
@@ -337,9 +345,9 @@ The work plan proposed six benchmark cases. The revised concept set covers them 
 | Benchmark case | Required concepts | Covered by revised set |
 | --- | --- | --- |
 | B1: Static website with object storage | deployment unit/interface, storage, endpoint, access policy, artifact | Yes |
-| B2: Web app with managed PostgreSQL | workload, runtime/artifact, data service, network, secrets, policy, capacity | Yes |
-| B3: Autoscaled API service | workload, endpoint, scaling, network, capacity | Yes |
-| B4: Private service with internal database | workload, data service, network boundary, relation, policy | Yes |
+| B2: Web app with managed PostgreSQL | workload, runtime/artifact, data service, network, secrets, policy, capacity, SLOs | Yes |
+| B3: Autoscaled API service | workload, endpoint, scaling/adaptation, network, capacity, performance requirement | Yes |
+| B4: Private service with internal database | workload, data service, network boundary, relation, policy, placement | Yes |
 | B5: Serverless API with storage | workload, runtime model, artifact, endpoint, storage, policy | Yes, if runtime includes `function` |
 | B6: Kubernetes-hosted app with external database | workload, runtime/artifact, data service, endpoint, network, configuration, identity | Yes |
 
@@ -354,24 +362,29 @@ This result should be interpreted cautiously. It means the concept set can descr
 
 ## Critical Analysis of the Revised Answer
 
-The revised concept set is stronger than the initial answer because it separates three concerns that were previously hidden inside other concepts:
+The peer-reviewed literature strengthens the RQ1 answer but also makes it more nuanced.
+
+The concept set is stronger than the earlier version because it separates concerns that were previously hidden:
 
 - Deployment interface is separated from deployment unit.
 - Runtime and artifact are separated from generic workload.
 - Capacity profile is separated from scaling and placement.
+- Requirements/SLO constraints are separated from individual resources.
+- Data service is generalized beyond relational database alone.
 
-This makes the DSL more suitable for compiler design. A compiler needs explicit inputs, outputs, artifacts, capacity constraints, and relationships in order to produce backend-specific IaC predictably.
+This makes the DSL more suitable for compiler design. A compiler needs explicit inputs, outputs, artifacts, capacity constraints, requirements, and relationships in order to produce backend-specific IaC predictably.
 
-However, the revised set also introduces a tradeoff. A larger concept set may make the DSL less minimal in a strict numerical sense. The research justification is that these are not arbitrary features; they are semantic concepts repeatedly present in standards and IaC systems. Their inclusion reduces hidden assumptions during backend lowering.
+The tradeoff is that the set is larger. A strict interpretation of "minimal" might prefer fewer constructs. However, peer-reviewed cloud modelling work shows that reducing the core too far creates hidden assumptions. For example, if SLOs are not explicit, provider selection becomes arbitrary. If capacity is not explicit, generated instance sizes become arbitrary. If artifacts are not explicit, workload lowering becomes ambiguous.
 
 The most uncertain concepts are:
 
-- data service: useful for managed PostgreSQL and future services, but difficult to generalize across all PaaS offerings.
+- data service: useful for managed PostgreSQL and future data services, but difficult to generalize across all PaaS offerings.
 - identity and access policy: portable at the intent level, but often only partially portable at the implementation level.
 - placement and availability: necessary for resilience, but provider availability-zone semantics and managed-service guarantees differ.
 - capacity profile: necessary for backend generation, but mappings from abstract capacity to provider SKUs may be approximate.
+- requirements/SLO constraints: essential for semantic portability, but difficult to evaluate without provider capability and monitoring data.
 
-These uncertainties do not invalidate the RQ1 result. They show where RQ2 and RQ3 must be careful. The IR must preserve these concepts as semantic intent, and provider mappings must classify results as exact, partial, degraded, unsupported, or provider-specific.
+These uncertainties do not invalidate the RQ1 result. They identify the exact areas where RQ2 and RQ3 must be careful. The IR must preserve these concepts as semantic intent, and provider mappings must classify results as exact, partial, degraded, unsupported, or provider-specific.
 
 ## Mapping to Thesis Outcomes
 
@@ -389,9 +402,9 @@ The answer to RQ1 directly supports the expected thesis outcomes.
 
 | Category | Concepts | Portability status |
 | --- | --- | --- |
-| Portable core | deployment unit, deployment interface, workload, relationship/lifecycle, endpoint | High |
-| Portable with semantic variation | runtime/artifact, capacity, storage, data service, scaling, placement/availability | Medium |
-| Portable but provider-sensitive | identity principal, access policy, secrets | Medium to low |
+| Portable core | deployment unit, deployment interface, workload/component, endpoint, relationship/lifecycle | High |
+| Portable with semantic variation | runtime/artifact, capacity, storage, data service, scaling/adaptation, placement/availability, requirements/SLO constraints | Medium |
+| Portable but provider-sensitive | identity principal, access policy, secrets, security requirements | Medium to low |
 | Non-portable extension | provider-specific IAM conditions, load balancer features, proprietary managed services, engine-specific macros | Low |
 
 This taxonomy should become an input to RQ2, where the semantic IR will represent these concepts as nodes, edges, attributes, constraints, and portability annotations.
@@ -400,7 +413,7 @@ This taxonomy should become an input to RQ2, where the semantic IR will represen
 
 The first research question can be answered with the following finding:
 
-> The minimal concept set for a vendor-neutral cloud architecture DSL consists of deployment unit, deployment interface, workload, runtime and artifact model, capacity profile, network boundary, endpoint, storage, data service, identity principal, access policy, configuration/secrets, scaling policy, placement/availability, and relationship/lifecycle semantics. These concepts are sufficient to express the selected benchmark architectures without using provider-specific resource names, while preserving enough semantic information for IR construction, provider capability mapping, backend lowering, and portability diagnostics.
+> The minimal concept set for a vendor-neutral cloud architecture DSL consists of deployment unit, deployment interface, workload/component, runtime and artifact model, capacity profile, network boundary, endpoint, storage, data service, identity principal, access policy, configuration/secrets, scaling/adaptation policy, placement/availability, requirements/SLO constraints, and relationship/lifecycle semantics. These concepts are sufficient to express the selected benchmark architectures without using provider-specific resource names, while preserving enough semantic information for IR construction, provider capability mapping, backend lowering, and portability diagnostics.
 
 ## Implication for the Next Research Question
 
@@ -414,30 +427,35 @@ The next step is to transform the concept set into a semantic IR with:
 - constraints for validation
 - inputs and outputs for the deployment interface
 - artifact references for runnable workloads
+- SLO/requirement records for performance, cost, availability, security, location, and compliance goals
 - portability annotations for exact, partial, degraded, unsupported, and provider-extension mappings
 
 This connects the RQ1 answer directly to the planned IR contribution of the thesis.
 
 ## References
 
-[1] Mell, P. and Grance, T., "The NIST Definition of Cloud Computing," NIST SP 800-145, 2011. https://csrc.nist.gov/pubs/sp/800/145/final
+[1] Binz, T., Breitenbuecher, U., Kopp, O., and Leymann, F., "TOSCA: Portable Automated Deployment and Management of Cloud Applications," in Advanced Web Services, Springer, 2014, pp. 527-549. https://doi.org/10.1007/978-1-4614-7535-4_22
 
-[2] Liu, F. et al., "NIST Cloud Computing Reference Architecture," NIST SP 500-292, 2011. https://www.nist.gov/publications/nist-cloud-computing-reference-architecture
+[2] Brogi, A., Canciani, A., and Soldani, J., "Simulation-based matching of cloud applications," Science of Computer Programming, 2017. https://www.sciencedirect.com/science/article/pii/S0167642317301223
 
-[3] OASIS, "Topology and Orchestration Specification for Cloud Applications Version 2.0." https://docs.oasis-open.org/tosca/TOSCA/v2.0/csd06/TOSCA-v2.0-csd06.html
+[3] Tomarchio, O., Calcaterra, D., Di Modica, G., and Mazzaglia, P., "TORCH: a TOSCA-Based Orchestrator of Multi-Cloud Containerised Applications," Journal of Grid Computing, 2021. https://link.springer.com/article/10.1007/s10723-021-09549-z
 
-[4] Breitenbucher, U. et al., "Model-Based Cloud Resource Management with TOSCA and OCCI," arXiv, 2020. https://arxiv.org/abs/2001.07900
+[4] Dehury, C. K., Jakovits, P., Srirama, S. N., Giotis, G., and Garg, G., "TOSCAdata: Modeling data pipeline applications in TOSCA," Journal of Systems and Software, 2022. https://www.sciencedirect.com/science/article/pii/S0164121221002508
 
-[5] HashiCorp, "Terraform Language Documentation." https://developer.hashicorp.com/terraform/language
+[5] Ferry, N., Rossini, A., Chauvel, F., Morin, B., and Solberg, A., "Towards model-driven provisioning, deployment, monitoring, and adaptation of multi-cloud systems," IEEE CLOUD, 2013. https://doi.org/10.1109/CLOUD.2013.133
 
-[6] AWS, "CloudFormation template sections." https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html
+[6] Ferry, N., Chauvel, F., Song, H., Rossini, A., Lushpenko, M., and Solberg, A., "CloudMF: Model-Driven Management of Multi-Cloud Applications," ACM Transactions on Internet Technology, 2018. https://doi.org/10.1145/3125621
 
-[7] Microsoft Learn, "What are ARM templates?" https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview
+[7] Achilleos, A. P. et al., "The cloud application modelling and execution language," Journal of Cloud Computing, 2019. https://link.springer.com/article/10.1186/s13677-019-0138-7
 
-[8] OpenStack, "Introduction to Heat Orchestration." https://static.openstack.org/docs/heat/latest/admin/introduction.html
+[8] Chiari, M. et al., "DOML: A new modeling approach to Infrastructure-as-Code," Information Systems, 2024. https://www.sciencedirect.com/science/article/pii/S0306437924000802
 
-[9] Kubernetes, "Workloads." https://kubernetes.io/docs/concepts/workloads/
+[9] Alonso, J. et al., "Understanding the challenges and novel architectural models of multi-cloud native applications: a systematic literature review," Journal of Cloud Computing, 2023. https://link.springer.com/article/10.1186/s13677-022-00367-6
 
-[10] Kubernetes, "Volumes." https://kubernetes.io/docs/concepts/storage/volumes/
+[10] Quint, P.-C., and Kratzke, N., "Towards a Lightweight Multi-Cloud DSL for Elastic and Transferable Cloud-native Applications," CLOSER, 2018. https://www.scitepress.org/Papers/2018/66838/
 
-[11] SPIFFE, "Secure Production Identity Framework for Everyone." https://spiffe.io/docs/latest/spiffe-specs/spiffe/
+[11] Elhabbash, A., Jumagaliyev, A., Blair, G. S., and Elkhatib, Y., "SLO-ML: A Language for Service Level Objective Modelling in Multi-cloud Applications," IEEE/ACM UCC, 2019. https://doi.org/10.1145/3344341.3368805
+
+[12] Casola, V., De Benedictis, A., Rak, M., Villano, U., Rios, E., Rego, A., and Capone, G., "Model-based deployment of secure multi-cloud applications," International Journal of Grid and Utility Computing, 2019. https://www.inderscience.com/info/inarticle.php?artid=102710
+
+[13] Miranda, J., Guillen, J., Murillo, J. M., and Canal, C., "Development of Adaptive Multi-cloud Applications: A Model-Driven Approach," MODELSWARD, 2013. https://www.scitepress.org/papers/2013/43706/43706.pdf

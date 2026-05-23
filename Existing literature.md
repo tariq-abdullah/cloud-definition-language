@@ -1,6 +1,6 @@
 # Existing Literature Study: Unified Cloud Architecture Definition Language
 
-Prepared from `synopsis.md` and `outcomes.md`. Literature checked on 23 May 2026.
+Prepared from `synopsis.md` and `outcomes.md`. 
 
 ## 1. Research Context
 
@@ -42,7 +42,15 @@ CAMEL is another important model-driven approach. It was developed to support mu
 
 DOML, the DevOps Modeling Language, is more recent and directly related. It proposes a cloud modeling language that can be mapped into multiple IaC languages, addressing provisioning, deployment, and configuration [11]. DOML validates the need for a single modeling paradigm to reduce the expertise required across specialized IaC languages.
 
-These approaches support the thesis direction but leave space for a more compiler-centered contribution. The proposed work can focus less on creating a broad modeling ecosystem and more on a precise IR, lowering rules, semantic equivalence, and portability diagnostics.
+The peer-reviewed literature reviewed for RQ1 strengthens this modelling line further. Binz et al. present TOSCA as a portable deployment and management approach in which application components, relationships, deployment artifacts, and lifecycle operations are modelled explicitly rather than hidden inside provider-specific resources [20]. Brogi et al. show that TOSCA-based application descriptions can be compared through exact and relaxed compatibility, which is directly relevant to this thesis because provider mappings also need to distinguish exact, partial, degraded, and unsupported semantic matches [21].
+
+TOSCA-based orchestration has also been extended toward modern multi-cloud and data-intensive scenarios. TORCH demonstrates TOSCA-based orchestration of multi-cloud containerized applications and reinforces the separation between application requirements and proprietary cloud APIs [22]. TOSCAdata extends the TOSCA approach to data-pipeline applications, showing that portable modelling must eventually account for data movement, processing, scheduling, reuse, and multi-cloud data flow, not only compute and network resources [23].
+
+CloudML and CloudMF provide another important research thread. Ferry et al. argue that multi-cloud systems require model-driven techniques for provisioning, deployment, monitoring, and runtime adaptation [24]. CloudMF later develops this direction into model-driven management of multi-cloud applications, using a DSL and models@runtime environment to support continuous provisioning, deployment, and adaptation [25]. These works support the thesis decision to include lifecycle semantics, requirements, relationships, and adaptation policies as first-class concepts in the DSL and IR.
+
+Other peer-reviewed RQ1 literature clarifies the minimal concept set required for a portable DSL. Quint and Kratzke propose a lightweight multi-cloud DSL for elastic and transferable cloud-native applications, focusing on container deployment, services, ports, CPU/memory requests, scaling rules, scheduling constraints, and separation between elastic platform and application definitions [26]. SLO-ML shows the need for explicit service-level objective modelling in multi-cloud applications, especially where deployment choices depend on performance, cost, availability, or other quality constraints [27]. The MUSA deployer work shows that secure multi-cloud deployment also requires security requirements and security service-level agreements to be expressed before deployment [28]. Miranda et al. similarly argue that adaptive multi-cloud application design must avoid early dependence on vendor-specific technologies because such dependence damages portability at the design stage [29].
+
+These approaches support the thesis direction but leave space for a more compiler-centered contribution. The proposed work can focus less on creating a broad modeling ecosystem and more on a precise IR, lowering rules, semantic equivalence, capability mapping, and portability diagnostics.
 
 ### 2.4 Kubernetes-native Control Planes and Platform Abstractions
 
@@ -81,22 +89,23 @@ This literature strongly supports the thesis. If syntax validity is no longer th
 | Provider-native IaC | CloudFormation, Bicep, AWS CDK | Accurate access to provider-specific resources and lifecycle behavior | Locks the model to one provider's vocabulary and semantics |
 | Multi-provider IaC engines | Terraform, OpenTofu, Pulumi | Shared workflow across many providers; strong ecosystem | Provider resources remain provider-specific; no built-in semantic equivalence model |
 | Standard orchestration languages | TOSCA | Topology and lifecycle modeling across domains | Broad standard, but not a focused compiler IR with portability scoring and backend lowering diagnostics |
-| Model-driven multi-cloud languages | CAMEL, DOML, MODAClouds/CloudML family | Higher-level modeling of deployments, requirements, and multi-cloud concerns | Often complex, ecosystem-dependent, or not centered on modern IaC backend generation |
+| Model-driven multi-cloud languages | CAMEL, DOML, MODAClouds/CloudML/CloudMF family | Higher-level modeling of deployments, requirements, adaptation, and multi-cloud concerns | Often complex, ecosystem-dependent, or not centered on modern IaC backend generation |
+| RQ1-focused semantic modelling studies | TORCH, TOSCAdata, lightweight multi-cloud DSLs, SLO-ML, MUSA | Evidence for topology, lifecycle, runtime/artifact, data, security, placement, and SLO concepts | Useful for deriving the portable concept set, but not complete as an IaC compiler and fidelity-analysis framework |
 | Kubernetes-native platform abstractions | Crossplane, OAM/KubeVela patterns | Custom APIs, composition, reconciliation, platform self-service | Semantics are encoded by platform teams; portability analysis is not the core language feature |
 | Infrastructure-from-Code | Cloud programming languages, SDK-based IfC | Derives infrastructure from application code; improves developer ergonomics | Traceability and explicit portability reasoning can be weak |
 | IaC analysis and testing | Static analysis, Multi-IaC-Eval, metamorphic IaC engine testing | Detects defects, validates syntax, benchmarks generation, tests engines | Usually analyzes existing IaC rather than compiling provider-neutral intent into semantically comparable targets |
 
-The central observation is that existing work solves pieces of the problem, but not the whole research problem. Provider-native IaC solves accuracy. Terraform and Pulumi solve multi-provider workflow. TOSCA and CAMEL solve model-driven description. Crossplane solves platform API composition. Static analysis solves quality checks. What remains underdeveloped is a unified compiler architecture for cloud intent with a semantic IR that can reason about equivalence, non-equivalence, and acceptable degradation across providers.
+The central observation is that existing work solves pieces of the problem, but not the whole research problem. Provider-native IaC solves accuracy. Terraform and Pulumi solve multi-provider workflow. TOSCA, CAMEL, CloudMF, DOML, TORCH, TOSCAdata, SLO-ML, and MUSA solve important parts of model-driven description, requirements, security, data, topology, lifecycle, and adaptation. Crossplane solves platform API composition. Static analysis solves quality checks. What remains underdeveloped is a unified compiler architecture for cloud intent with a semantic IR that can reason about equivalence, non-equivalence, and acceptable degradation across providers.
 
 ## 4. Research Gap
 
 The literature reveals six concrete gaps.
 
 1. Lack of intent-level abstraction.
-Most current IaC begins from provider resources. Even when the syntax is neutral, the schema is provider-specific. A research DSL should let users express concepts such as `PortableComputeNode`, `ManagedPostgres`, `ObjectStorage`, `PublicEndpoint`, `PrivateNetwork`, `AutoscalingPolicy`, and `IdentityBoundary` without prematurely choosing AWS, Azure, GCP, Kubernetes, or OpenStack.
+Most current IaC begins from provider resources. Even when the syntax is neutral, the schema is provider-specific. RQ1 literature shows that a research DSL should let users express concepts such as deployment unit, workload/component, runtime/artifact, capacity profile, managed data service, endpoint, network boundary, access policy, scaling/adaptation policy, placement constraint, and SLO requirement without prematurely choosing AWS, Azure, GCP, Kubernetes, or OpenStack.
 
 2. Lack of a semantic IR.
-Existing IaC engines maintain dependency graphs and state, but they do not expose an IR that captures cloud semantics such as durability guarantees, network reachability, scaling behavior, identity constraints, data locality, lifecycle policy, and managed-service assumptions. Without such an IR, translation is mostly schema mapping rather than compiler-like semantic lowering.
+Existing IaC engines maintain dependency graphs and state, but they do not expose an IR that captures cloud semantics such as topology, lifecycle, artifacts, durability guarantees, network reachability, scaling behavior, identity constraints, data locality, security requirements, SLOs, and managed-service assumptions. Without such an IR, translation is mostly schema mapping rather than compiler-like semantic lowering.
 
 3. Weak handling of partial equivalence.
 Cloud services rarely match exactly. For example, managed PostgreSQL, object storage, IAM, load balancing, serverless functions, and autoscaling all differ across providers. Current tools can deploy alternatives, but they generally do not explain whether the alternative preserves semantics, weakens a guarantee, changes failure behavior, or requires manual intervention.
@@ -203,7 +212,7 @@ The research need is therefore well founded: a vendor-neutral cloud architecture
 
 [10] Achilleos et al., "The cloud application modelling and execution language," Journal of Cloud Computing, 2019. https://link.springer.com/article/10.1186/s13677-019-0138-7
 
-[11] Rademacher et al., "DOML: A new modeling approach to Infrastructure-as-Code," Future Generation Computer Systems, 2024. https://www.sciencedirect.com/science/article/pii/S0306437924000802
+[11] Chiari et al., "DOML: A new modeling approach to Infrastructure-as-Code," Information Systems, 2024. https://www.sciencedirect.com/science/article/pii/S0306437924000802
 
 [12] Crossplane, "What's Crossplane?" https://docs.crossplane.io/latest/whats-crossplane/
 
@@ -220,3 +229,23 @@ The research need is therefore well founded: a vendor-neutral cloud architecture
 [18] Alonso et al., "Understanding the challenges and novel architectural models of multi-cloud native applications: a systematic literature review," Journal of Cloud Computing, 2023. https://link.springer.com/article/10.1186/s13677-022-00367-6
 
 [19] Opara-Martins, Sahandi, and Tian, "Critical analysis of vendor lock-in and its impact on cloud computing migration," Journal of Cloud Computing, 2016. https://link.springer.com/article/10.1186/s13677-016-0054-z
+
+[20] Binz, T., Breitenbuecher, U., Kopp, O., and Leymann, F., "TOSCA: Portable Automated Deployment and Management of Cloud Applications," in Advanced Web Services, Springer, 2014, pp. 527-549. https://doi.org/10.1007/978-1-4614-7535-4_22
+
+[21] Brogi, A., Canciani, A., and Soldani, J., "Simulation-based matching of cloud applications," Science of Computer Programming, 2017. https://www.sciencedirect.com/science/article/pii/S0167642317301223
+
+[22] Tomarchio, O., Calcaterra, D., Di Modica, G., and Mazzaglia, P., "TORCH: a TOSCA-Based Orchestrator of Multi-Cloud Containerised Applications," Journal of Grid Computing, 2021. https://link.springer.com/article/10.1007/s10723-021-09549-z
+
+[23] Dehury, C. K., Jakovits, P., Srirama, S. N., Giotis, G., and Garg, G., "TOSCAdata: Modeling data pipeline applications in TOSCA," Journal of Systems and Software, 2022. https://www.sciencedirect.com/science/article/pii/S0164121221002508
+
+[24] Ferry, N., Rossini, A., Chauvel, F., Morin, B., and Solberg, A., "Towards model-driven provisioning, deployment, monitoring, and adaptation of multi-cloud systems," IEEE CLOUD, 2013. https://doi.org/10.1109/CLOUD.2013.133
+
+[25] Ferry, N., Chauvel, F., Song, H., Rossini, A., Lushpenko, M., and Solberg, A., "CloudMF: Model-Driven Management of Multi-Cloud Applications," ACM Transactions on Internet Technology, 2018. https://doi.org/10.1145/3125621
+
+[26] Quint, P.-C., and Kratzke, N., "Towards a Lightweight Multi-Cloud DSL for Elastic and Transferable Cloud-native Applications," CLOSER, 2018. https://www.scitepress.org/Papers/2018/66838/
+
+[27] Elhabbash, A., Jumagaliyev, A., Blair, G. S., and Elkhatib, Y., "SLO-ML: A Language for Service Level Objective Modelling in Multi-cloud Applications," IEEE/ACM UCC, 2019. https://doi.org/10.1145/3344341.3368805
+
+[28] Casola, V., De Benedictis, A., Rak, M., Villano, U., Rios, E., Rego, A., and Capone, G., "Model-based deployment of secure multi-cloud applications," International Journal of Grid and Utility Computing, 2019. https://www.inderscience.com/info/inarticle.php?artid=102710
+
+[29] Miranda, J., Guillen, J., Murillo, J. M., and Canal, C., "Development of Adaptive Multi-cloud Applications: A Model-Driven Approach," MODELSWARD, 2013. https://www.scitepress.org/papers/2013/43706/43706.pdf

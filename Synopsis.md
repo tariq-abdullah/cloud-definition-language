@@ -1,6 +1,14 @@
 # Title
 Design and Implementation of a Unified Cloud Architecture Definition Language : A Semantic Compiler Framework for Portable, Vendor-Neutral Infrastructure-as-Code Generation
 
+## Researcher and Programme Details
+
+Researcher: Tariq Abdullah  
+Programme: M.Tech in Cloud Computing  
+Institution: Indian Institute of Technology Patna (IIT Patna)  
+Date: January 2025  
+Submission note: Prepared in partial fulfilment of the requirements for the degree of Master of Technology in Cloud Computing.
+
 ## Abstract of Problem Statement: 
 
 Cloud infrastructure provisioning is increasingly difficult due to differences across cloud providers and the reliance on provider-specific tools such as Terraform and AWS CloudFormation. Although Infrastructure-as-Code (IaC) frameworks introduce some level of abstraction, they remain tethered to individual platforms. As a result, migrating systems between providers often requires substantial rework and leads to vendor lock-in.
